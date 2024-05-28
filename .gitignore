@@ -108,5 +108,3 @@ venv.bak/
 
 # api credentials
 .streamlit/secrets.toml
-backend/data/app.db
-/backend/data

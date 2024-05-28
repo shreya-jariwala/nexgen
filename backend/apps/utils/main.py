@@ -27,7 +27,7 @@ def get_sanitized_filename(filename):
   cleaned_filename = cleaned_filename.rstrip("_")
 
   # Add "mb_" prefix to the filename
-  cleaned_filename = "mb_" + cleaned_filename
+  cleaned_filename = "sj_" + cleaned_filename + "_mb"
 
   return cleaned_filename.lower()  # Convert to lowercase for consistency
 

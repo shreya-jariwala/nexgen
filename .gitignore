@@ -110,3 +110,4 @@ venv.bak/
 .streamlit/secrets.toml
 backend/data/app.db
 /backend/data
+*.db

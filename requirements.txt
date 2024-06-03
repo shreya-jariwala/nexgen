@@ -2,6 +2,7 @@ streamlit
 lxml
 requests
 PyMuPDF
+pymupdf4llm
 google-cloud-vision
 google-cloud-aiplatform
 futures

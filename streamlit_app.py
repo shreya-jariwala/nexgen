@@ -47,8 +47,8 @@ with st.sidebar:
 
         start_time = time.time()
 
-        retries = 0
-        max_retries = 5
+        attempt = 0
+        max_attempts = 5
 
         filename, file_extension = os.path.splitext(uploaded_character_list.name)
 
@@ -68,24 +68,26 @@ with st.sidebar:
 
             initialize_database(process_name, raw_characters, num_characters)
 
-            while retries < max_retries:
+            while attempt < max_attempts:
 
                 batches = identify_invalid_batches(process_name)
                 if not batches:  # If batches is empty, break the loop
                     break
 
-                st.write(f"Attempt ({retries+1}/{max_retries})")
-                    
                 try: 
-                    st.write("Preparing Data Batches...")
+                    if attempt == 0: st.write("Preparing Data Batches...")
+                    elif attempt == 1 : st.write("Reattempting Failed Batches")
+
                     context = read_database(process_name, batches, column_name="context")
                     prompt = read_database(process_name, batches, column_name="prompt")
 
-                    st.write("Querying Language Model...")
+                    if attempt == 0: 
+                        st.write("Querying Language Model...")
                     rag_prompt = build_rag_prompt(context, prompt)
                     response = get_response(rag_prompt) 
                     
-                    st.write("Validating and Evaluating Response...")
+                    if attempt == 0: 
+                        st.write("Validating and Evaluating Response...")
                     xml_characters = parse_xml(response)
                     update_database(process_name, batches, xml_characters, column_name="xml_characters")
                     
@@ -97,12 +99,12 @@ with st.sidebar:
                     update_database(process_name, batches, evaluation_status, column_name="evaluation_status")
                 
                 except Exception as e:
-                    st.write(f"Retrying Attempt ({retries+1}/{max_retries}) as it raised: {e}.")
+                    st.write(f"Reattempting as it raised an internal error.")
                     continue
 
-                retries += 1
+                attempt += 1
 
-            if retries == max_retries:
+            if attempt == max_attempts:
                 # Check if there are still invalid batches
                 remaining_batches = identify_invalid_batches(process_name)
                 if remaining_batches:
@@ -120,11 +122,12 @@ with st.sidebar:
             end_time = time.time()
             total_time = str(round((end_time-start_time),1))
 
-            if retries == max_retries:
+            if attempt == max_attempts:
                 # Check if there are still invalid batches
                 remaining_batches = identify_invalid_batches(process_name)
                 if remaining_batches:
-                    status.update(label=f"Processing incomplete. Please review the following characters. {remaining_batches}", state="complete", expanded=True)
+                    status.update(label="Processing incomplete.", state="complete", expanded=True)
+                    character_state_view.warning(f"Please review the following characters. {remaining_batches}")
             else:  
                 status.update(label="Processing complete! Your NEXUS file is ready.", state="complete", expanded=False)
 

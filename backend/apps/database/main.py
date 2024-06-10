@@ -60,21 +60,22 @@ def initialize_database(table_name, raw_characters, total_characters):
 def identify_invalid_batches(table_name):
     """
     Fetches a list of question IDs with validation status False from the specified table.
+    Also identifies empty entries in the "xml_characters" column.
 
     Args:
         table_name (str): The name of the table in the database.
 
     Returns:
-        list: A list of question IDs with validation status False.
+        list: A list of question IDs with validation status False or empty "xml_characters" entries.
     """
     characters_dict = []
     conn = sqlite3.connect(f"{DATA_DIR}/app.db")  # Connect to the SQLite database
 
     cursor = conn.cursor()
     cursor.execute(f"""
-        SELECT start, end
+        SELECT start, end, xml_characters
         FROM {table_name}
-        WHERE validation_status != 1 OR evaluation_status != 1;
+        WHERE validation_status != 1 OR evaluation_status != 1 OR xml_characters IS NULL OR xml_characters = '';
     """)
 
     for row in cursor.fetchall():

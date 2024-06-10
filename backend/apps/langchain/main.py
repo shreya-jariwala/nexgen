@@ -1,16 +1,16 @@
 import streamlit as st
-
-from langchain_google_vertexai import VertexAI
-import vertexai
-from langchain_google_vertexai import VertexAIEmbeddings
-from google.oauth2 import service_account
-
-from langchain.prompts import ChatPromptTemplate
+import time
 from concurrent.futures import ThreadPoolExecutor
 
-from langchain.evaluation import load_evaluator
-from langchain_core.prompts import PromptTemplate
+import litellm
+from langchain_google_vertexai import VertexAI
+import vertexai
+from google.oauth2 import service_account
 
+from langchain.evaluation import load_evaluator
+
+
+GEMINI_API_KEY = st.secrets.gemini.api_key
 
 # Initialize the client
 VERTEXAI_PROJECT = st.secrets.vertexai.project
@@ -20,34 +20,85 @@ GOOGLE_CREDENTIALS = service_account.Credentials.from_service_account_info(st.se
 vertexai.init(project=VERTEXAI_PROJECT, location=VERTEXAI_LOCATION, credentials=GOOGLE_CREDENTIALS)
 
 #Config
-model = VertexAI(model_name="gemini-1.5-pro-preview-0409")
-llm = VertexAI(model_name="gemini-1.0-pro-vision-001")
-embeddings = VertexAIEmbeddings(model_name="textembedding-gecko@003")
+llm = VertexAI(model_name="gemini-1.0-pro")
 
+# Your API request limit per minute
+API_LIMIT_PER_MINUTE = 1000
+
+# Function to get responses from the language model
 def get_response(prompt_list):
-    with ThreadPoolExecutor(max_workers=30) as executor:
-        results = executor.map(get_response_worker, prompt_list)
-    return list(results)
+    # Keep track of the number of requests made in the current minute
+    requests_this_minute = 0
+    start_time = time.time()
+
+    with ThreadPoolExecutor() as executor:
+        results = []
+        for prompt in prompt_list:
+            # Wait if the API limit is reached
+            while requests_this_minute >= API_LIMIT_PER_MINUTE:
+                time.sleep(60 - (time.time() - start_time))
+                requests_this_minute = 0
+                start_time = time.time()
+
+            # Submit the task to the executor
+            future = executor.submit(get_response_worker, prompt)
+            results.append(future)
+
+            # Increment the request counter
+            requests_this_minute += 1
+
+        # Retrieve the results from the futures
+        return [future.result() for future in results]
 
 def get_response_worker(item):
-    prompt = ChatPromptTemplate.from_messages(
-        [("{context}\n\n{question}")]
-    )
-    chain = prompt | model
-    response = chain.invoke(item)
-    return response
+    """
+    Retrieves a response from the language model with automatic retries.
+    """
+    try:
+        response = litellm.completion(
+            model="gemini/gemini-1.5-flash",
+            api_key=GEMINI_API_KEY,
+            messages=[{"role": "user", "content": f"{item}"}],
+        )
+        message_content = response.choices[0].message.content
+        return message_content
+    except Exception as e:
+        raise  # This ensures the retry mechanism is triggered
 
+# Function to get evaluations
 def get_eval(eval_prompt_list):
-    with ThreadPoolExecutor(max_workers=30) as executor:
-        results = executor.map(get_eval_worker, eval_prompt_list)
-    return list(results)
+    # Keep track of the number of requests made in the current minute
+    requests_this_minute = 0
+    start_time = time.time()
+
+    with ThreadPoolExecutor() as executor:
+        results = []
+        for eval_item in eval_prompt_list:
+            # Wait if the API limit is reached
+            while requests_this_minute >= API_LIMIT_PER_MINUTE:
+                time.sleep(60 - (time.time() - start_time))
+                requests_this_minute = 0
+                start_time = time.time()
+
+            # Submit the task to the executor
+            future = executor.submit(get_eval_worker, eval_item)
+            results.append(future)
+
+            # Increment the request counter
+            requests_this_minute += 1
+
+        # Retrieve the results from the futures
+        return [future.result() for future in results]
 
 def get_eval_worker(eval_item):
-    evaluator = load_evaluator("labeled_criteria", llm=model, criteria="correctness")
-    eval_result = evaluator.evaluate_strings(
-        input=eval_item['input'],
-        prediction=eval_item['prediction'],
-        reference=eval_item['reference']
-    )
-        
-    return eval_result["score"]
+    
+    try:
+        evaluator = load_evaluator("labeled_criteria", llm=llm, criteria="correctness")
+        eval_result = evaluator.evaluate_strings(
+            input=eval_item['input'],
+            prediction=eval_item['prediction'],
+            reference=eval_item['reference']
+        )   
+        return eval_result["score"]
+    except Exception as e:
+        raise  # This ensures the retry mechanism is triggered

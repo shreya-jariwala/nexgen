@@ -62,41 +62,27 @@ def build_evaluation_prompt(prompts, xmls, contexts):
     return prompt_list
 
 
-def retrieve_context(text, start_char, end_char):
-    """Retrieves context from text between start and end characters, ensuring all intermediate numbers are present.
+def retrieve_context(text, start_char, end_char, total_char):
+  """Retrieves a text chunk from a larger text string.
 
-    Args:
-        text (str): The text to extract context from.
-        start_char (int): The starting number.
-        end_char (int): The ending number.
+  Args:
+    text: The entire text string.
+    start_char: The starting character index for the desired text chunk.
+    end_char: The ending character index for the desired text chunk.
+    total_char: The total number of characters in the text.
 
-    Returns:
-        str: The extracted context if all intermediate numbers are found, otherwise the original text.
-    """
+  Returns:
+    A string containing the text chunk.
+  """
 
-    # Ensure start and end characters are integers
-    start_char = int(start_char)
-    end_char = int(end_char)
+  # Calculate chunk size
+  chunk_size = len(text) / total_char
 
-    # Check if start and end characters are valid
-    if start_char >= end_char:
-        return text  # Invalid range, return original text
+  # Create a list of all chunks (assuming chunks are equal size)
+  all_chunks = [text[int(i * chunk_size):int((i + 1) * chunk_size)] for i in range(total_char)]
 
-    # Build regular expressions for each number (1. 2. ... 10.)
-    number_patterns = [rf"(?<!\S){num}\.\s*" for num in range(start_char, end_char + 1)]
+  # Adjust start_char to include 10 chunks before, if available
+  adjusted_start_char = max(0, start_char - 20)
 
-    # Combine patterns into a single regex
-    combined_pattern = r"|".join(number_patterns)
-
-    # Find all occurrences of the numbers
-    matches = re.findall(combined_pattern, text)
-
-    # Check if all numbers are present
-    if len(matches) == (end_char - start_char + 1):
-        # All numbers found, extract context
-        start_index = re.search(rf"(?<!\S){start_char}\.\s*", text).start()
-        end_index = re.search(rf"(?<!\S){end_char}\.\s*", text).end()
-        return text[start_index:end_index + 500]  # Adjust +500 as needed
-    else:
-        # Some numbers missing, return original text
-        return text
+  # Return the text chunk from the list
+  return ''.join(all_chunks[adjusted_start_char:end_char + 16])

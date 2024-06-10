@@ -1,7 +1,7 @@
+import pymupdf4llm
 import fitz
 import PyPDF2
 import io
-from backend.apps.pdf.utils import column_boxes
 
 def parse_pdf(pdf_file, start_page, end_page):
 
@@ -9,14 +9,9 @@ def parse_pdf(pdf_file, start_page, end_page):
 
     doc = fitz.open(stream=pdf_file, filetype="pdf")
 
-    all_text = ""
+    md_text = pymupdf4llm.to_markdown(doc)
 
-    for page in doc:
-        bboxes = column_boxes(page, footer_margin=50, no_image_text=False)
-        for rect in bboxes:
-            all_text += (page.get_text(clip=rect, sort=True))
-
-    return(all_text)
+    return(md_text)
 
 def extract_relevant_pages(pdf_file, start_page, end_page):
     """Extracts a range of pages from a PDF file.

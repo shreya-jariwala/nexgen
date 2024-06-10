@@ -42,7 +42,7 @@ def initialize_database(table_name, raw_characters, total_characters):
     while start <= total_characters:
         end = min(start + BATCH_SIZE - 1, total_characters)
 
-        context = retrieve_context(raw_characters, start, end)
+        context = retrieve_context(raw_characters, start, end, total_characters)
         prompt = generative_prompt.format(start=start, end=end)
 
         cursor.execute(f"""

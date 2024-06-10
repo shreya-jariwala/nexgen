@@ -124,7 +124,7 @@ with st.sidebar:
                 # Check if there are still invalid batches
                 remaining_batches = identify_invalid_batches(process_name)
                 if remaining_batches:
-                    status.update(label="Processing incomplete. Please review remaining characters.", state="complete", expanded=True)
+                    status.update(label="Processing incomplete. Please review the following characters. f{remaining_batches}", state="complete", expanded=True)
             else:  
                 status.update(label="Processing complete! Your NEXUS file is ready.", state="complete", expanded=False)
 

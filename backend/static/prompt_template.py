@@ -1,6 +1,4 @@
-generative_prompt="""Here is a sample of text from a phylogenetic research paper. Please extract the character descriptions and their corresponding states for characters between character number {start} through character number {end}, and all the characters inbetween as an XML Tree:
-
-STRUCTURE:
+generative_prompt="""Here is a sample of text from a phylogenetic research paper. Please extract the character descriptions and their corresponding states for characters between character number {start} and character number {end}, including all the characters in between, as an XML tree. Ignore the publication details when extracting. The XML tree should be formatted according to the following schema:
 
 <characters>
 	<character index=" " name="character name">

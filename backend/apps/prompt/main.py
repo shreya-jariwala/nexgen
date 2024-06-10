@@ -82,7 +82,7 @@ def retrieve_context(text, start_char, end_char, total_char):
   all_chunks = [text[int(i * chunk_size):int((i + 1) * chunk_size)] for i in range(total_char)]
 
   # Adjust start_char to include 10 chunks before, if available
-  adjusted_start_char = max(0, start_char - 20)
+  adjusted_start_char = max(0, start_char - 15)
 
   # Return the text chunk from the list
-  return ''.join(all_chunks[adjusted_start_char:end_char + 16])
+  return ''.join(all_chunks[adjusted_start_char:end_char + 7])

@@ -24,6 +24,7 @@ llm = VertexAI(model_name="gemini-1.0-pro")
 
 # Your API request limit per minute
 API_LIMIT_PER_MINUTE = 1000
+EVAL_API_LIMIT_PER_MINUTE = 300
 
 # Function to get responses from the language model
 def get_response(prompt_list):
@@ -75,7 +76,7 @@ def get_eval(eval_prompt_list):
         results = []
         for eval_item in eval_prompt_list:
             # Wait if the API limit is reached
-            while requests_this_minute >= API_LIMIT_PER_MINUTE:
+            while requests_this_minute >= EVAL_API_LIMIT_PER_MINUTE:
                 time.sleep(60 - (time.time() - start_time))
                 requests_this_minute = 0
                 start_time = time.time()

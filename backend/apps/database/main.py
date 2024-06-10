@@ -147,7 +147,7 @@ def get_labels(table_name, column_name='xml_characters'):
     all_values = etree.Element('characters')
 
     # Use parameterized query to prevent SQL injection
-    cursor.execute(f"SELECT {column_name} FROM {table_name}")
+    cursor.execute(f"SELECT {column_name} FROM {table_name} WHERE {column_name} IS NOT NULL AND {column_name} <> ''")
     
     rows = cursor.fetchall()
 

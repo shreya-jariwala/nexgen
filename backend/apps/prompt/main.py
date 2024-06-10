@@ -62,7 +62,69 @@ def build_evaluation_prompt(prompts, xmls, contexts):
     return prompt_list
 
 
-def retrieve_context(text, start_char, end_char, total_char):
+import re
+
+def retrieve_context_script1(text, start_char, end_char):
+    """Retrieves context from text between start and end characters, ensuring all intermediate numbers are present."""
+    # Ensure start and end characters are integers
+    start_char = int(start_char)
+    end_char = int(end_char)
+
+    # Check if start and end characters are valid
+    if start_char >= end_char:
+        return text  # Invalid range, return original text
+
+    # Try both patterns
+    for pattern_type in [1, 2]:
+        pattern = build_pattern(start_char, end_char, pattern_type)
+        matches = find_matches(text, pattern)
+        if len(matches) >= (end_char - start_char + 1):
+            start_index = find_start_index(text, start_char, pattern_type)
+            end_index = find_end_index(text, end_char, pattern_type, start_index)
+            if end_index == float('inf'):
+                end_index = len(text)
+            return text[start_index:end_index + 1500]  # Adjust +500 as needed
+
+    # Some numbers missing in all formats, return original text
+    return text
+
+def build_pattern(start_char, end_char, pattern_type):
+    """Builds a regular expression pattern based on the pattern type."""
+    if pattern_type == 1:
+        number_patterns = [rf"(?<!\S){num}\.\s*" for num in range(start_char, end_char + 1)]
+    elif pattern_type == 2:
+        number_patterns = [rf"\|{num}\.\s*" for num in range(start_char, end_char + 1)]
+    else:
+        raise ValueError("Invalid pattern type")
+    return r"|".join(number_patterns)
+
+def find_matches(text, pattern):
+    """Finds all occurrences of the pattern in the text."""
+    return re.findall(pattern, text)
+
+def find_start_index(text, start_char, pattern_type):
+    """Finds the starting index of the context."""
+    if pattern_type == 1:
+        start_pattern = rf"(?<!\S){start_char}\.\s*"
+    elif pattern_type == 2:
+        start_pattern = rf"\|{start_char}\.\s*"
+    else:
+        raise ValueError("Invalid pattern type")
+    return re.search(start_pattern, text).start()
+
+def find_end_index(text, end_char, pattern_type, start_index):
+    """Finds the ending index of the context."""
+    if pattern_type == 1:
+        end_pattern = rf"(?<!\S){end_char}\.\s*"
+    elif pattern_type == 2:
+        end_pattern = rf"\|{end_char}\.\s*"
+    else:
+        raise ValueError("Invalid pattern type")
+    end_matches = list(re.finditer(end_pattern, text))
+    return min([m.end() for m in end_matches], key=lambda x: abs(x - start_index)) if end_matches else float('inf')
+
+
+def retrieve_context_script2(text, start_char, end_char, total_char):
   """Retrieves a text chunk from a larger text string.
 
   Args:
@@ -85,4 +147,14 @@ def retrieve_context(text, start_char, end_char, total_char):
   adjusted_start_char = max(0, start_char - 15)
 
   # Return the text chunk from the list
-  return ''.join(all_chunks[adjusted_start_char:end_char + 7])
+  return ''.join(all_chunks[adjusted_start_char:end_char + 10])
+
+def retrieve_context(text, start_char, end_char, total_char):
+  """Compares output from both scripts and returns the smaller one."""
+  output1 = retrieve_context_script1(text, start_char, end_char)
+  output2 = retrieve_context_script2(text, start_char, end_char, total_char)
+
+  if len(output1) <= len(output2):
+    return output1
+  else:
+    return output2

@@ -5,7 +5,7 @@ import sqlite3
 import os
 from lxml import etree
 
-from backend.apps.prompt.main import retrieve_context
+from backend.apps.retriever.main import retrieve_context
 from backend.static.prompt_template import generative_prompt, STRUCTURED_EXAMPLE
 
 DATA_DIR = os.path.dirname(__file__) + "/../../data"
@@ -42,7 +42,7 @@ def initialize_database(table_name, raw_characters, total_characters):
     while start <= total_characters:
         end = min(start + BATCH_SIZE - 1, total_characters)
 
-        context = retrieve_context(raw_characters, start, end, total_characters)
+        context = retrieve_context(raw_characters, start, end)
         prompt = generative_prompt.format(start=start, end=end)
 
         cursor.execute(f"""

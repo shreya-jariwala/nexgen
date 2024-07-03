@@ -32,7 +32,7 @@ def order_numbers_by_occurrence(numbers_with_index, end_number):
     ordered_numbers = []
     seen_numbers = set()
     last_index = -1  # Initialize last_index to ensure the first number's index is valid
-    for i in range(1, (end_number + 1)):  # Assuming numbers are within 1 to 99, adjust range if needed
+    for i in range(1, (end_number + 1)): 
         for number, index in numbers_with_index:
             if number == i and number not in seen_numbers and index > last_index:
                 ordered_numbers.append((number, index))
@@ -78,7 +78,5 @@ def retrieve_context(text, start_number, end_number):
 
     extracted_text = extract_text_between_numbers(text, start_number, end_number, ordered_numbers)
     
-    print(extracted_text)
-
     return extracted_text
     

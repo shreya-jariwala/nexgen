@@ -20,7 +20,7 @@ GOOGLE_CREDENTIALS = service_account.Credentials.from_service_account_info(st.se
 vertexai.init(project=VERTEXAI_PROJECT, location=VERTEXAI_LOCATION, credentials=GOOGLE_CREDENTIALS)
 
 #Config
-llm = VertexAI(model_name="gemini-1.5-pro")
+llm = VertexAI(model_name="gemini-1.5-flash")
 
 # Your API request limit per minute
 API_LIMIT_PER_MINUTE = 1000

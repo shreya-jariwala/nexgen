@@ -17,7 +17,7 @@ st.title("MorphoBank PBDB PDF to NEXUS File Generator")
 st.subheader("Start by Uploading the Document.")
 st.write("Please upload the file containing the character list. Ideally I want you to keep the file open side by side to help me with more information that will help me process you request more effeciently")
 
-uploaded_character_list = st.file_uploader("Upload Character List file", type="pdf")
+uploaded_character_list = st.file_uploader("Upload Character List file")
 
 parsing_method_description = st.empty()
 

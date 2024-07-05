@@ -7,7 +7,7 @@ def convert_doc_to_markdown(uploaded_file, pages_list):
 
     Args:
         uploaded_file: The uploaded PDF file object.
-        pages_range: The desired page range.
+        pages_list: The desired page range (e.g., [1, 2, 3] or [1, 5]).
 
     Returns:
         The converted markdown text.
@@ -17,8 +17,26 @@ def convert_doc_to_markdown(uploaded_file, pages_list):
         # Open the PDF file
         doc = fitz.open(stream=uploaded_file.read())
 
-        # Convert the specified page range to markdown
-        md_text = pymupdf4llm.to_markdown(doc, pages=pages_list)
+        md_text = ""
+        for page_num in pages_list:
+            page = doc[page_num]
+            print(page)
+            
+            # Extract text in reading order
+            blocks = page.get_text("blocks")
+
+            # Iterate through text blocks
+            for block in blocks:
+                # Ignore empty blocks or blocks with only whitespace
+                if not block[4].strip():
+                    continue
+
+                # Get the text from the block
+                block_text = block[4].strip()
+
+                # Add the text to the markdown string
+                md_text += block_text + "\n"
+
         return md_text
     except Exception as e:
         raise(f"Error parsing document: {e}")

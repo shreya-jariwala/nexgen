@@ -60,6 +60,23 @@ def get_response_worker(item):
             model="gemini/gemini-1.5-flash",
             api_key=GEMINI_API_KEY,
             messages=[{"role": "user", "content": f"{item}"}],
+            safety_settings=[
+        {
+            "category": "HARM_CATEGORY_HARASSMENT",
+            "threshold": "BLOCK_NONE",
+        },
+        {
+            "category": "HARM_CATEGORY_HATE_SPEECH",
+            "threshold": "BLOCK_NONE",
+        },
+        {
+            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            "threshold": "BLOCK_NONE",
+        },
+        {
+            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+            "threshold": "BLOCK_NONE",
+        }],
         )
         message_content = response.choices[0].message.content
         return message_content

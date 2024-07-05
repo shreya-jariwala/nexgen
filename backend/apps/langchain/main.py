@@ -27,7 +27,7 @@ API_LIMIT_PER_MINUTE = 1000
 EVAL_API_LIMIT_PER_MINUTE = 300
 
 # Function to get responses from the language model
-def get_response(prompt_list):
+def get_response(prompt_list, ai_model):
     # Keep track of the number of requests made in the current minute
     requests_this_minute = 0
     start_time = time.time()
@@ -42,7 +42,7 @@ def get_response(prompt_list):
                 start_time = time.time()
 
             # Submit the task to the executor
-            future = executor.submit(get_response_worker, prompt)
+            future = executor.submit(get_response_worker, prompt, ai_model)
             results.append(future)
 
             # Increment the request counter
@@ -51,13 +51,13 @@ def get_response(prompt_list):
         # Retrieve the results from the futures
         return [future.result() for future in results]
 
-def get_response_worker(item):
+def get_response_worker(item, ai_model):
     """
     Retrieves a response from the language model with automatic retries.
     """
     try:
         response = litellm.completion(
-            model="gemini/gemini-1.5-flash",
+            model=ai_model,
             api_key=GEMINI_API_KEY,
             messages=[{"role": "user", "content": f"{item}"}],
             safety_settings=[

@@ -20,7 +20,6 @@ def convert_doc_to_markdown(uploaded_file, pages_list):
         md_text = ""
         for page_num in pages_list:
             page = doc[page_num]
-            print(page)
             
             # Extract text in reading order
             blocks = page.get_text("blocks")

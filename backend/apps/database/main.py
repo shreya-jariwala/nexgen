@@ -6,7 +6,7 @@ import os
 from lxml import etree
 
 from backend.apps.retriever.main import retrieve_context
-from backend.static.prompt_template import generative_prompt, STRUCTURED_EXAMPLE
+from backend.static.prompt_template import generative_prompt
 
 DATA_DIR = os.path.dirname(__file__) + "/../../data"
 BATCH_SIZE = 10

@@ -70,7 +70,7 @@ def extract_text_between_numbers(text, start_number, end_number, numbers_with_in
     if start_index is not None and end_index is not None:
         return text[start_index:end_index]
     else:
-        return text
+        return ""
 
 def retrieve_context(text, start_number, end_number):
     numbers_with_index = extract_numbers_with_index(text)

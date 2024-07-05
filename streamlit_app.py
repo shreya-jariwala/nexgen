@@ -36,8 +36,9 @@ st.subheader("Upload the Empty NEXUS File")
 st.write("Please upload the Nexus file with the missing character state labels that need to be processed.")
 uploaded_nexus_file = st.file_uploader("Upload NEXUS File", type="nex")
 
-# Processing
+character_state_view = st.empty()
 
+# Processing
 with st.sidebar:
     if st.button("Process NEXUS file"):
 

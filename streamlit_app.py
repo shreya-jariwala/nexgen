@@ -5,34 +5,32 @@ import time
 from backend.apps.database.main import identify_invalid_batches, initialize_database, update_database, read_database, get_labels
 
 from backend.apps.nex.main import insert_or_replace_charstatelabels
-from backend.apps.pdf.main import parse_pdf, extract_relevant_pages
+from backend.apps.doc.main import convert_document
 from backend.apps.prompt.main import build_rag_prompt, build_evaluation_prompt
 from backend.apps.langchain.main import get_response, get_eval
-from backend.apps.utils.main import get_sanitized_filename, get_page_range
+from backend.apps.utils.main import get_sanitized_filename
 from backend.apps.xml.main import parse_xml, validate_xml, build_character_state_labels
 
 # Layout and file upload
 st.title("MorphoBank PBDB PDF to NEXUS File Generator")
 
 st.subheader("Start by Uploading the Document.")
-st.write("Please upload the file containing the character list. Ideally I want you to keep the file open side by side to help me with more information that will help me process you request more effeciently")
-
-uploaded_character_list = st.file_uploader("Upload Character List file", type="pdf")
-
-parsing_method_description = st.empty()
+st.write("Upload the document containing your character list. For best results, have the file open alongside this app.")
+uploaded_character_list = st.file_uploader("Upload Character List file")
 
 st.subheader("Define your Characters")
-st.write("""
-    Please identify the pages in the document where the character state labels are located? Also, please specify the number of characters and their corresponding states that you'd like me to extract
-""")
+st.write("Please identify the pages in the document where the character state labels are located? Also, please specify the number of characters and their corresponding states that you'd like me to extract")
 
 opt_col1, opt_col2 = st.columns(2)
-
 with opt_col1:
-    target_pages = st.text_input("Pages in Range (Inclusive)", placeholder="3-4")
-
+    target_pages = st.text_input("On what pages are the character states located? (e.g., 3-4)", placeholder="3-4")
 with opt_col2:
-    num_characters = st.number_input("Number of Characters", step=int(1))
+    num_characters = st.number_input("How many characters are there?", step=int(1))
+
+st.subheader("Select the inference model")
+st.write("Which model should I use to process your data?")
+selected_model = st.selectbox("Choose the Gemini model for inference:",("Gemini 1.5 Flash", "Gemini 1.5 Pro"))
+ai_model = {"Gemini 1.5 Flash": "gemini/gemini-1.5-flash", "Gemini 1.5 Pro": "gemini/gemini-1.5-pro"}[selected_model]
 
 st.subheader("Upload the Empty NEXUS File")
 st.write("Please upload the Nexus file with the missing character state labels that need to be processed.")
@@ -41,7 +39,6 @@ uploaded_nexus_file = st.file_uploader("Upload NEXUS File", type="nex")
 character_state_view = st.empty()
 
 # Processing
-
 with st.sidebar:
     if st.button("Process NEXUS file"):
 
@@ -54,17 +51,14 @@ with st.sidebar:
 
         process_name = get_sanitized_filename(filename)
 
-        start_page, end_page = get_page_range(target_pages)
-
         with st.status("Processing...", expanded=True) as status:
 
-            if file_extension == ".pdf":
-                st.write("Parsing Character List...")
-                raw_characters = parse_pdf(uploaded_character_list, start_page, end_page)
+            st.write("Parsing Character List...")
+            raw_characters = convert_document(uploaded_character_list, target_pages)
 
             #elif file_extension == ".docx" or ".doc":
                 #st.write("Parsing Docs...")
-                #raw_characterstatelabels = parse_docx(uploaded_character_list)
+                #raw_characterstatelabels = parse_docx(uploaded_character_list)4
 
             initialize_database(process_name, raw_characters, num_characters)
 
@@ -84,7 +78,7 @@ with st.sidebar:
                     if attempt == 0: 
                         st.write("Querying Language Model...")
                     rag_prompt = build_rag_prompt(context, prompt)
-                    response = get_response(rag_prompt) 
+                    response = get_response(rag_prompt, ai_model) 
                     
                     if attempt == 0: 
                         st.write("Validating and Evaluating Response...")

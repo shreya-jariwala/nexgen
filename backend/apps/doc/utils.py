@@ -1,66 +1,81 @@
-import pymupdf4llm
 import fitz
 import re
+import pymupdf4llm
 
-def convert_doc_to_markdown(uploaded_file, pages_list):
-    """Converts a uploaded document to markdown.
+def extract_text_from_pdf_page(page):
+    """Extracts and formats text from a single PDF page.
 
     Args:
-        uploaded_file: The uploaded PDF file object.
-        pages_list: The desired page range (e.g., [1, 2, 3] or [1, 5]).
+        page: A fitz.Page object representing the PDF page.
 
     Returns:
-        The converted markdown text.
+        A string containing the formatted text from the page.
     """
+    page_text = ""
+    for block in page.get_text("blocks"):
+        # Ignore empty or whitespace-only blocks
+        if not block[4].strip():
+            continue
+        page_text += block[4].strip() + "\n"
+    return page_text
 
-    try:
-        # Open the PDF file
-        doc = fitz.open(stream=uploaded_file.read())
-
-        md_text = ""
-        for page_num in pages_list:
-            page = doc[page_num]
-            
-            # Extract text in reading order
-            blocks = page.get_text("blocks")
-
-            # Iterate through text blocks
-            for block in blocks:
-                # Ignore empty blocks or blocks with only whitespace
-                if not block[4].strip():
-                    continue
-
-                # Get the text from the block
-                block_text = block[4].strip()
-
-                # Add the text to the markdown string
-                md_text += block_text + "\n"
-
-        return md_text
-    except Exception as e:
-        raise(f"Error parsing document: {e}")
-
-def get_page_range(page_range_str):
-    """Validates a page range string with flexible formatting and returns a list of pages.
+def parse_page_range_string(page_range_string):
+    """Parses a string representing a page range into a list of page numbers.
 
     Args:
-        page_range_str: The page range string (e.g., '1 - 10', ' 5, 12', '10').
+        page_range_string: A string representing the page range 
+                           (e.g., '1-10', '5,12', '10').
 
     Returns:
-        A list of pages if valid, otherwise None.
+        A list of integers representing the page numbers in the range.
 
     Raises:
-        ValueError: If the page range is invalid.
+        ValueError: If the input string is not a valid page range.
     """
-
-    match = re.search(r"^\s*(\d+)\s*([-,\s]+\s*(\d+)\s*)?$", page_range_str)
+    match = re.search(r"^\s*(\d+)\s*([-,\s]+\s*(\d+)\s*)?$", page_range_string)
     if match:
         start_page = int(match.group(1))
-        end_page = int(match.group(3)) if match.group(3) else start_page  # Handle single page case
-
+        end_page = int(match.group(3)) if match.group(3) else start_page
         if start_page <= end_page:
             return list(range(start_page - 1, end_page))
         else:
             raise ValueError("Invalid page range: start page must be less than or equal to end page.")
     else:
-        raise ValueError("Invalid page range format.") 
+        raise ValueError("Invalid page range format.")
+
+def convert_docx_to_markdown(docx_file, page_numbers):
+    """Converts a DOCX file to markdown, handling page range errors.
+
+    Args:
+        docx_file: The DOCX file object.
+        page_numbers: A list of integers representing the desired page numbers.
+
+    Returns:
+        The converted markdown text as a string. If page range 
+        selection fails, the entire document is converted.
+    """
+    try:
+        return pymupdf4llm.to_markdown(docx_file, pages=page_numbers)
+    except Exception as e:
+        print(f"Error converting specific pages of DOCX, converting the whole document: {e}")
+        return pymupdf4llm.to_markdown(docx_file)
+    
+def convert_pdf_to_markdown(pdf_file, page_numbers):
+    """Converts specific pages of a PDF file to markdown text.
+
+    Args:
+        pdf_file: The PDF file object.
+        page_numbers: A list of integers representing the desired page numbers.
+
+    Returns:
+        The converted markdown text as a string.
+    """
+    try:
+        pdf_document = fitz.open(stream=pdf_file.read())
+        markdown_text = ""
+        for page_num in page_numbers:
+            page = pdf_document[page_num]
+            markdown_text += extract_text_from_pdf_page(page)
+        return markdown_text
+    except Exception as e:
+        raise Exception(f"Error parsing PDF document: {e}")

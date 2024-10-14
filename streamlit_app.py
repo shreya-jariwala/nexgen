@@ -5,7 +5,7 @@ import time
 from backend.apps.database.main import identify_invalid_batches, initialize_database, update_database, read_database, get_labels
 
 from backend.apps.nex.main import insert_or_replace_charstatelabels
-from backend.apps.doc.main import convert_document
+from backend.apps.doc.main import convert_document_to_markdown
 from backend.apps.prompt.main import build_rag_prompt, build_evaluation_prompt
 from backend.apps.langchain.main import get_response, get_eval
 from backend.apps.utils.main import get_sanitized_filename
@@ -54,7 +54,7 @@ with st.sidebar:
         with st.status("Processing...", expanded=True) as status:
 
             st.write("Parsing Character List...")
-            raw_characters = convert_document(uploaded_character_list, target_pages)
+            raw_characters = convert_document_to_markdown(uploaded_character_list, target_pages)
 
             #elif file_extension == ".docx" or ".doc":
                 #st.write("Parsing Docs...")

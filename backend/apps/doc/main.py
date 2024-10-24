@@ -17,10 +17,8 @@ def convert_document_to_markdown(uploaded_file, page_range=None):
         file_extension = uploaded_file.name.lower().split('.')[-1]
 
         if file_extension == 'docx':
-            print("docx returned")
             return convert_docx_to_markdown(uploaded_file)
         elif file_extension == 'pdf':
-            print("pdf returned")
             return convert_pdf_to_markdown(uploaded_file, page_range)
         else:
             print(f"Unsupported file type: {file_extension}")

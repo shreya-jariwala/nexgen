@@ -10,7 +10,7 @@ from backend.apps.prompt.main import build_rag_prompt, build_evaluation_prompt
 from backend.apps.langchain.main import get_response, get_eval
 from backend.apps.utils.main import get_sanitized_filename
 from backend.apps.xml.main import parse_xml, validate_xml, build_character_state_labels
-
+from backend.apps.common.utils import parse_page_range_string
 # Layout and file upload
 st.title("MorphoBank PBDB PDF to NEXUS File Generator")
 
@@ -52,14 +52,16 @@ with st.sidebar:
         attempt = 0
         max_attempts = 5
 
-        filename, file_extension = os.path.splitext(uploaded_character_list.name)
-
         process_name = get_sanitized_filename(filename)
 
         with st.status("Processing...", expanded=True) as status:
 
             st.write("Parsing Character List...")
-            raw_characters = convert_document_to_markdown(uploaded_character_list, target_pages)
+
+            if target_pages is not None:
+                page_range = parse_page_range_string(target_pages)
+            
+            raw_characters = convert_document_to_markdown(uploaded_character_list, page_range)
 
             initialize_database(process_name, raw_characters, num_characters)
 

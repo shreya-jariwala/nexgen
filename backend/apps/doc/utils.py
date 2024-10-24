@@ -1,6 +1,6 @@
 import fitz
 import re
-import pymupdf4llm
+import docx
 
 def extract_text_from_pdf_page(page):
     """Extracts and formats text from a single PDF page.
@@ -21,7 +21,7 @@ def extract_text_from_pdf_page(page):
 
 def parse_page_range_string(page_range_string):
     """Parses a string representing a page range into a list of page numbers.
-
+    
     Args:
         page_range_string: A string representing the page range 
                            (e.g., '1-10', '5,12', '10').
@@ -43,22 +43,32 @@ def parse_page_range_string(page_range_string):
     else:
         raise ValueError("Invalid page range format.")
 
-def convert_docx_to_markdown(docx_file, page_numbers):
-    """Converts a DOCX file to markdown, handling page range errors.
 
-    Args:
-        docx_file: The DOCX file object.
-        page_numbers: A list of integers representing the desired page numbers.
-
-    Returns:
-        The converted markdown text as a string. If page range 
-        selection fails, the entire document is converted.
-    """
-    try:
-        return pymupdf4llm.to_markdown(docx_file, pages=page_numbers)
-    except Exception as e:
-        print(f"Error converting specific pages of DOCX, converting the whole document: {e}")
-        return pymupdf4llm.to_markdown(docx_file)
+def convert_docx_to_markdown(doc_file):
+    # Load the docx file
+    doc = docx.Document(doc_file)
+    
+    markdown_lines = []
+    
+    for paragraph in doc.paragraphs:
+        text = paragraph.text
+        
+        # Check for headings
+        if paragraph.style.name.startswith('Heading'):
+            level = int(paragraph.style.name.split()[-1])
+            markdown_lines.append(f"{'#' * level} {text}")
+        else:
+            # Check for lists
+            if paragraph.style.name == 'List Paragraph':
+                # Assuming simple bullet lists
+                markdown_lines.append(f"- {text}")
+            else:
+                # Regular paragraph
+                markdown_lines.append(text)
+    
+    # Join the lines into a single string
+    markdown_text = "\n".join(markdown_lines)
+    return markdown_text
     
 def convert_pdf_to_markdown(pdf_file, page_numbers):
     """Converts specific pages of a PDF file to markdown text.
@@ -71,7 +81,7 @@ def convert_pdf_to_markdown(pdf_file, page_numbers):
         The converted markdown text as a string.
     """
     try:
-        pdf_document = fitz.open(stream=pdf_file.read())
+        pdf_document = fitz.open(stream=pdf_file.read(), filetype="pdf")
         markdown_text = ""
         for page_num in page_numbers:
             page = pdf_document[page_num]

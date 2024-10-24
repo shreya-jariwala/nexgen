@@ -111,3 +111,4 @@ venv.bak/
 backend/data/app.db
 /backend/data
 *.db
+*secrets.toml*

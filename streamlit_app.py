@@ -56,6 +56,7 @@ with st.sidebar:
             st.write("Parsing Character List...")
             raw_characters = convert_document_to_markdown(uploaded_character_list, target_pages)
 
+
             #elif file_extension == ".docx" or ".doc":
                 #st.write("Parsing Docs...")
                 #raw_characterstatelabels = parse_docx(uploaded_character_list)4

@@ -60,6 +60,8 @@ with st.sidebar:
 
             if target_pages is not None:
                 page_range = parse_page_range_string(target_pages)
+            else:
+                page_range = None
             
             raw_characters = convert_document_to_markdown(uploaded_character_list, page_range)
 
